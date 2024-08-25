@@ -3,14 +3,14 @@
       "step": {
         "user": {
           "data": {
-            "api_key": "[%key:common::config_flow::data::api_key%]"
+            "api_key": "API key"
           }
         }
       },
       "error": {
-        "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-        "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-        "unknown": "[%key:common::config_flow::error::unknown%]"
+        "cannot_connect": "Cannot connect to service",
+        "invalid_auth": "Invalid Authentification",
+        "unknown": "Unknown Error"
       }
     },
     "options": {
@@ -18,11 +18,11 @@
         "init": {
           "data": {
             "prompt": "Instructions",
-            "chat_model": "[%key:common::generic::model%]",
+            "chat_model": "Chat model",
             "max_tokens": "Maximum tokens to return in response",
             "temperature": "Temperature",
             "top_p": "Top P",
-            "llm_hass_api": "[%key:common::config_flow::data::llm_hass_api%]",
+            "llm_hass_api": "Home Assistant LLM API",
             "recommended": "Recommended model settings"
           },
           "data_description": {
