@@ -89,7 +89,7 @@ class GroqConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         try:
-            await validate_input(user_input)
+            await validate_input(self.hass, user_input)
         except groq.APIConnectionError:
             errors["base"] = "cannot_connect"
         except groq.AuthenticationError:
