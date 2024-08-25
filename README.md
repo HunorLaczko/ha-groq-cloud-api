@@ -15,16 +15,16 @@ Before configuring the integration you must first install the `custom_integratio
 
 ### HACS ✨
 
-1. **Add** ➕ [this repository](https://my.home-assistant.io/redirect/hacs_repository/?owner=HunorLaczko&repository=ha-groq-api&category=integration) to your HACS repositories:
+1. **Add** ➕ [this repository](https://my.home-assistant.io/redirect/hacs_repository/?owner=HunorLaczko&repository=ha-groq-cloud-api&category=integration) to your HACS repositories:
 
     - **Click** on this link ⤵️
 
-      [![Add Repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=HunorLaczko&repository=ha-groq-api&category=integration)
+      [![Add Repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=HunorLaczko&repository=ha-groq-cloud-api&category=integration)
 
     - Or **copy** this url ⤵️ and paste into your HACS custom repostories
 
       ```url
-      https://github.com/HunorLaczko/ha-groq-api
+      https://github.com/HunorLaczko/ha-groq-cloud-api
       ```
 
 2. **Install** 💻 the `Groq Cloud API` integration
