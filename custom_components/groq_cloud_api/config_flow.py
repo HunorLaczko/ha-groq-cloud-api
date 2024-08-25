@@ -71,6 +71,9 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]):
     LOGGER.debug("User validation got: %s", data)
     data[CONF_API_KEY] = obscured_api_key
 
+    if data.get(CONF_TEMPERATURE) is None:
+        data[CONF_CHAT_MODEL] = RECOMMENDED_CHAT_MODEL
+
     response = await asyncio.to_thread(
         requests.get,
         url="https://api.groq.com/openai/v1/models",
@@ -92,7 +95,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]):
         raise UnknownError
 
     for model in response.json().get("data", []):
-        if model.get("id") == data.get(CONF_MODEL):
+        if model.get("id") == data.get(CONF_CHAT_MODEL):
             break
         if model == response.json().get("data")[-1]:
             raise ModelNotFound
