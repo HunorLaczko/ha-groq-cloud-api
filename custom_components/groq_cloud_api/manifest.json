@@ -1,0 +1,17 @@
+{
+  "domain": "groq_cloud_api",
+  "name": "Groq Cloud API",
+  "version": "0.0.1",
+  "codeowners": [
+    "@HunorLaczko"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/HunorLaczko/ha-groq-cloud-api",
+  "issue_tracker": "https://github.com/HunorLaczko/ha-groq-cloud-api/issues",
+  "homekit": {},
+  "iot_class": "cloud_push",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": []
+}

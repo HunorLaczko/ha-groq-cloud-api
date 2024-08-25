@@ -1,0 +1,39 @@
+{
+    "config": {
+      "step": {
+        "user": {
+          "data": {
+            "api_key": "[%key:common::config_flow::data::api_key%]"
+          }
+        }
+      },
+      "error": {
+        "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+        "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+        "unknown": "[%key:common::config_flow::error::unknown%]"
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "data": {
+            "prompt": "Utasítások",
+            "chat_model": "[%key:common::generic::model%]",
+            "max_tokens": "Válaszban visszatérítendő maximális tokenek száma",
+            "temperature": "Hőmérséklet",
+            "top_p": "Top P",
+            "llm_hass_api": "[%key:common::config_flow::data::llm_hass_api%]",
+            "recommended": "Ajánlott modellbeállítások"
+          },
+          "data_description": {
+            "prompt": "Add meg, hogy LLM hogyan reagáljon. Ez egy sablon is lehet."
+          }
+        }
+      }
+    },
+    "exceptions": {
+      "invalid_config_entry": {
+        "message": "Érvénytelen beállítás megadva. Ezt kaptam: {config_entry}"
+      }
+    }
+  }
