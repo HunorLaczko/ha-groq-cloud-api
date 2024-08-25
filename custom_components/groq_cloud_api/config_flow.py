@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 from types import MappingProxyType
 
 import groq
 
+import requests
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
@@ -16,7 +18,8 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.const import CONF_API_KEY, CONF_NAME, CONF_LLM_HASS_API
+from homeassistant import exceptions
+from homeassistant.const import CONF_API_KEY, CONF_NAME, CONF_LLM_HASS_API, CONF_MODEL
 from homeassistant.helpers import llm
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.selector import (
@@ -61,12 +64,40 @@ RECOMMENDED_OPTIONS = {
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]):
-    """Validate the user input allows us to connect.
+    """Validate the user input."""
 
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-    client = groq.AsyncGroq(api_key=data[CONF_API_KEY])
-    await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
+    obscured_api_key = data.get(CONF_API_KEY)
+    data[CONF_API_KEY] = "<api_key>"
+    LOGGER.debug("User validation got: %s", data)
+    data[CONF_API_KEY] = obscured_api_key
+
+    response = await asyncio.to_thread(
+        requests.get,
+        url="https://api.groq.com/openai/v1/models",
+        headers={
+            "Authorization": f"Bearer {data.get(CONF_API_KEY)}",
+            "Content-Type": "application/json"
+        },
+    )
+
+    LOGGER.debug("Models request took %f s and returned %d - %s", response.elapsed.seconds, response.status_code, response.reason)
+
+    if response.status_code == 401:
+        raise InvalidAPIKey
+
+    if response.status_code == 403:
+        raise UnauthorizedError
+
+    if response.status_code != 200:
+        raise UnknownError
+
+    for model in response.json().get("data", []):
+        if model.get("id") == data.get(CONF_MODEL):
+            break
+        if model == response.json().get("data")[-1]:
+            raise ModelNotFound
+    
+    LOGGER.debug("User validation successful")
 
 
 class GroqConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -222,3 +253,19 @@ def groq_config_option_schema(
         }
     )
     return schema
+
+
+class UnknownError(exceptions.HomeAssistantError):
+    """Unknown error."""
+
+
+class UnauthorizedError(exceptions.HomeAssistantError):
+    """API key valid but doesn't have the rights to use Whisper."""
+
+
+class InvalidAPIKey(exceptions.HomeAssistantError):
+    """Invalid api_key error."""
+
+
+class ModelNotFound(exceptions.HomeAssistantError):
+    """Model can't be found in the GroqCloud model's list."""

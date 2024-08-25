@@ -20,13 +20,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: GroqConfigEntry) -> bool
     LOGGER.info("Setting up %s", entry)
 
     client = groq.AsyncGroq(api_key=entry.data[CONF_API_KEY])
-    try:
-        await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
-    except groq.AuthenticationError as err:
-        LOGGER.error("Invalid API key: %s", err)
-        return False
-    except groq.GroqError as err:
-        raise ConfigEntryNotReady(err) from err
+    # try:
+    #     await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
+    # except groq.AuthenticationError as err:
+    #     LOGGER.error("Invalid API key: %s", err)
+    #     return False
+    # except groq.GroqError as err:
+    #     raise ConfigEntryNotReady(err) from err
 
     entry.runtime_data = client
 
