@@ -1,7 +1,7 @@
 {
   "domain": "groq_cloud_api",
   "name": "Groq Cloud API",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "codeowners": [
     "@HunorLaczko"
   ],

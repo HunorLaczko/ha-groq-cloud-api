@@ -20,6 +20,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: GroqConfigEntry) -> bool
     LOGGER.info("Setting up %s", entry)
 
     client = groq.AsyncGroq(api_key=entry.data[CONF_API_KEY])
+
+    # TODO: I get async errors when trying to call the list function. But this would be the proper way to validate the API key.
     # try:
     #     await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
     # except groq.AuthenticationError as err:
