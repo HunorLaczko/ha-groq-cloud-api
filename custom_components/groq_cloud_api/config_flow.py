@@ -148,25 +148,25 @@ class GroqConfigFlow(ConfigFlow, domain=DOMAIN):
         config_entry: ConfigEntry,
     ) -> OptionsFlow:
         """Create the options flow."""
-        return GroqOptionsFlow(config_entry)
-    
+        return GroqOptionsFlow()
+
 
 
 class GroqOptionsFlow(OptionsFlow):
     """Groq Cloud config flow options handler."""
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
+    def __init__(self) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
-        self.last_rendered_recommended = config_entry.options.get(
-            CONF_RECOMMENDED, False
-        )
+        self.last_rendered_recommended = False
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Manage the options."""
         options: dict[str, Any] | MappingProxyType[str, Any] = self.config_entry.options
+
+        if user_input is None:
+            self.last_rendered_recommended = options.get(CONF_RECOMMENDED, False)
 
         if user_input is not None:
             if user_input[CONF_RECOMMENDED] == self.last_rendered_recommended:
