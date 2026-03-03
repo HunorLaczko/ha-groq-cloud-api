@@ -296,7 +296,7 @@ class GroqOptionsFlow(OptionsFlow):
             vol.Optional(
                 CONF_LLM_HASS_API,
                 description={"suggested_value": options.get(CONF_LLM_HASS_API)},
-            ): SelectSelector(SelectSelectorConfig(options=hass_apis)),
+            ): SelectSelector(SelectSelectorConfig(options=hass_apis, multiple=True)),
             vol.Required(
                 CONF_CHAT_MODEL,
                 default=current_model,
