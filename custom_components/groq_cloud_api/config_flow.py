@@ -248,7 +248,9 @@ class GroqOptionsFlow(OptionsFlow):
             ): TemplateSelector(),
             vol.Optional(
                 CONF_LLM_HASS_API,
-                description={"suggested_value": options.get(CONF_LLM_HASS_API)},
+                description={"suggested_value": (
+                    [v] if isinstance(v := options.get(CONF_LLM_HASS_API), str) else v
+                )},
             ): SelectSelector(SelectSelectorConfig(options=hass_apis, multiple=True)),
             vol.Required(
                 CONF_CHAT_MODEL,
