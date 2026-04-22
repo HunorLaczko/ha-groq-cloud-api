@@ -30,7 +30,6 @@ from homeassistant.components.conversation import (
     async_get_result_from_chat_log,
     trace,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_LLM_HASS_API, MATCH_ALL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, intent, llm
@@ -183,9 +182,6 @@ class GroqConversationEntity(
         """When entity is added to Home Assistant."""
         await super().async_added_to_hass()
         conversation.async_set_agent(self.hass, self.entry, self)
-        self.entry.async_on_unload(
-            self.entry.add_update_listener(self._async_entry_update_listener)
-        )
 
     async def async_will_remove_from_hass(self) -> None:
         """When entity will be removed from Home Assistant."""
@@ -331,10 +327,3 @@ class GroqConversationEntity(
                 )
 
         return async_get_result_from_chat_log(user_input, chat_log)
-
-    async def _async_entry_update_listener(
-        self, hass: HomeAssistant, entry: ConfigEntry
-    ) -> None:
-        """Handle options update."""
-        # Reload as we update device info + entity name + supported features
-        await hass.config_entries.async_reload(entry.entry_id)

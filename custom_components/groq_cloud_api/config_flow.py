@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
 from types import MappingProxyType
 from typing import Any
 
 import groq
-import requests
 import voluptuous as vol
 
 from homeassistant.config_entries import (
@@ -20,6 +18,7 @@ from homeassistant.const import CONF_API_KEY, CONF_LLM_HASS_API
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import llm
+from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.helpers.selector import (
     BooleanSelector,
     NumberSelector,
@@ -59,70 +58,21 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
-async def async_fetch_models(api_key: str) -> list[str]:
+async def async_fetch_models(api_key: str, hass: HomeAssistant) -> list[str]:
     """Fetch available models from Groq API."""
-    response = await asyncio.to_thread(
-        requests.get,
-        url="https://api.groq.com/openai/v1/models",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        timeout=10,
-    )
-
-    if response.status_code != 200:
-        LOGGER.warning(
-            "Failed to fetch models: %d - %s",
-            response.status_code,
-            response.reason,
-        )
-        return []
-
-    models = response.json().get("data", [])
-    # Filter to only include models that support chat completions
-    # and sort alphabetically
-    model_ids = sorted([
-        model.get("id")
-        for model in models
-        if model.get("id")
-    ])
-
+    client = groq.AsyncGroq(api_key=api_key, http_client=get_async_client(hass))
+    response = await client.models.list()
+    model_ids = sorted([model.id for model in response.data if model.id])
     LOGGER.debug("Available models: %s", model_ids)
     return model_ids
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> list[str]:
     """Validate the user input and return available models."""
-    response = await asyncio.to_thread(
-        requests.get,
-        url="https://api.groq.com/openai/v1/models",
-        headers={
-            "Authorization": f"Bearer {data.get(CONF_API_KEY)}",
-            "Content-Type": "application/json",
-        },
-        timeout=10,
-    )
-
-    LOGGER.debug(
-        "Models request took %f s and returned %d - %s",
-        response.elapsed.total_seconds(),
-        response.status_code,
-        response.reason,
-    )
-
-    if response.status_code == 401:
-        raise InvalidAPIKey
-
-    if response.status_code == 403:
+    try:
+        return await async_fetch_models(data[CONF_API_KEY], hass)
+    except groq.PermissionDeniedError:
         raise UnauthorizedError
-
-    if response.status_code != 200:
-        raise UnknownError
-
-    # Return list of available models
-    models = response.json().get("data", [])
-    return sorted([model.get("id") for model in models if model.get("id")])
 
 
 class GroqConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -180,7 +130,6 @@ class GroqConfigFlow(ConfigFlow, domain=DOMAIN):
         return GroqOptionsFlow()
 
 
-
 class GroqOptionsFlow(OptionsFlow):
     """Groq Cloud API options flow handler."""
 
@@ -199,7 +148,11 @@ class GroqOptionsFlow(OptionsFlow):
 
         # Fetch available models from API
         api_key = self.config_entry.data.get(CONF_API_KEY)
-        available_models = await async_fetch_models(api_key)
+        try:
+            available_models = await async_fetch_models(api_key, self.hass)
+        except groq.GroqError:
+            LOGGER.warning("Failed to fetch models from Groq API, model list will be empty")
+            available_models = []
 
         options: dict[str, Any] | MappingProxyType[str, Any] = (
             self.config_entry.options
@@ -340,7 +293,3 @@ class UnauthorizedError(HomeAssistantError):
 
 class InvalidAPIKey(HomeAssistantError):
     """Invalid api_key error."""
-
-
-class ModelNotFound(HomeAssistantError):
-    """Model can't be found in the Groq Cloud model's list."""
