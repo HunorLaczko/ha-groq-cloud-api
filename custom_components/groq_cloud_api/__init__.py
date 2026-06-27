@@ -12,7 +12,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, LOGGER
+from .const import CONF_MAX_RETRIES, DOMAIN, LOGGER
 
 PLATFORMS = (Platform.CONVERSATION,)
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -32,6 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GroqConfigEntry) -> bool
     client = groq.AsyncGroq(
         api_key=entry.data[CONF_API_KEY],
         http_client=get_async_client(hass),
+        max_retries=entry.options.get(CONF_MAX_RETRIES, 0),
     )
 
     entry.runtime_data = client

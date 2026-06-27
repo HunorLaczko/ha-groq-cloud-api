@@ -39,6 +39,7 @@ from homeassistant.helpers.json import json_dumps
 from . import GroqConfigEntry
 from .const import (
     CONF_CHAT_MODEL,
+    CONF_MAX_RETRIES,
     CONF_MAX_TOKENS,
     CONF_PROMPT,
     CONF_REASONING_EFFORT,
@@ -48,6 +49,7 @@ from .const import (
     DOMAIN,
     LOGGER,
     RECOMMENDED_CHAT_MODEL,
+    RECOMMENDED_MAX_RETRIES,
     RECOMMENDED_MAX_TOKENS,
     RECOMMENDED_TEMPERATURE,
     RECOMMENDED_TOP_P,
@@ -212,6 +214,13 @@ class GroqConversationEntity(
             tools = [
                 _format_tool(tool, llm_api.custom_serializer) for tool in llm_api.tools
             ]
+            # Fix #25: Groq API limits tools to 128 per request
+            if len(tools) > 128:
+                LOGGER.warning(
+                    "Too many tools (%d) for Groq API, truncating to 128",
+                    len(tools),
+                )
+                tools = tools[:128]
 
         messages = _chat_log_to_messages(chat_log)
 
@@ -225,6 +234,7 @@ class GroqConversationEntity(
         client = self.entry.runtime_data
 
         # To prevent infinite loops, we limit the number of iterations
+        tools_fallback_attempted = False
         for _iteration in range(MAX_TOOL_ITERATIONS):
             try:
                 model = options.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL)
@@ -259,6 +269,66 @@ class GroqConversationEntity(
                         model_kwargs["reasoning_effort"] = reasoning_effort
 
                 result = await client.chat.completions.create(**model_kwargs)
+            except groq.BadRequestError as err:
+                # Fix #20: Smaller models may produce malformed tool calls;
+                # retry once without tools as a text-only fallback.
+                if (
+                    "tool_use_failed" in str(err)
+                    and not tools_fallback_attempted
+                    and tools
+                ):
+                    LOGGER.warning(
+                        "Groq returned tool_use_failed error, retrying without "
+                        "tools: %s",
+                        err,
+                    )
+                    tools_fallback_attempted = True
+                    tools = None
+                    continue
+                intent_response = intent.IntentResponse(language=user_input.language)
+                intent_response.async_set_error(
+                    intent.IntentResponseErrorCode.UNKNOWN,
+                    f"Sorry, I had a problem talking to Groq: {err}",
+                )
+                return conversation.ConversationResult(
+                    response=intent_response, conversation_id=chat_log.conversation_id
+                )
+            except groq.AuthenticationError as err:
+                # Fix #27: Better auth error messaging
+                intent_response = intent.IntentResponse(language=user_input.language)
+                intent_response.async_set_error(
+                    intent.IntentResponseErrorCode.UNKNOWN,
+                    "Sorry, Groq authentication failed. Please check your API key "
+                    "for leading/trailing whitespace or incorrect format.",
+                )
+                return conversation.ConversationResult(
+                    response=intent_response, conversation_id=chat_log.conversation_id
+                )
+            except groq.APIStatusError as err:
+                # Fix #19: Better error messaging for rate limit / payload errors
+                error_str = str(err)
+                if err.status_code == 413 or "rate_limit_exceeded" in error_str:
+                    intent_response = intent.IntentResponse(
+                        language=user_input.language
+                    )
+                    intent_response.async_set_error(
+                        intent.IntentResponseErrorCode.UNKNOWN,
+                        "Sorry, Groq rejected the request. "
+                        "Try reducing max_tokens in the integration options or "
+                        "upgrading your Groq API tier.",
+                    )
+                    return conversation.ConversationResult(
+                        response=intent_response,
+                        conversation_id=chat_log.conversation_id,
+                    )
+                intent_response = intent.IntentResponse(language=user_input.language)
+                intent_response.async_set_error(
+                    intent.IntentResponseErrorCode.UNKNOWN,
+                    f"Sorry, I had a problem talking to Groq: {err}",
+                )
+                return conversation.ConversationResult(
+                    response=intent_response, conversation_id=chat_log.conversation_id
+                )
             except groq.GroqError as err:
                 intent_response = intent.IntentResponse(language=user_input.language)
                 intent_response.async_set_error(

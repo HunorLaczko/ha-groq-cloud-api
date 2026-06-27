@@ -32,9 +32,10 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CONF_MAX_RETRIES,
+    CONF_PROMPT,
     CONF_CHAT_MODEL,
     CONF_MAX_TOKENS,
-    CONF_PROMPT,
     CONF_REASONING_EFFORT,
     CONF_SUPPORTS_REASONING,
     CONF_TEMPERATURE,
@@ -46,6 +47,7 @@ from .const import (
     LOGGER,
     QWEN_REASONING_OPTIONS,
     RECOMMENDED_CHAT_MODEL,
+    RECOMMENDED_MAX_RETRIES,
     RECOMMENDED_MAX_TOKENS,
     RECOMMENDED_TEMPERATURE,
     RECOMMENDED_TOP_P,
@@ -268,6 +270,10 @@ class GroqOptionsFlow(OptionsFlow):
                 CONF_TEMPERATURE,
                 default=options.get(CONF_TEMPERATURE, RECOMMENDED_TEMPERATURE),
             ): NumberSelector(NumberSelectorConfig(min=0, max=2, step=0.05)),
+            vol.Optional(
+                CONF_MAX_RETRIES,
+                default=options.get(CONF_MAX_RETRIES, RECOMMENDED_MAX_RETRIES),
+            ): int,
             vol.Optional(
                 CONF_SUPPORTS_REASONING,
                 default=supports_reasoning,
