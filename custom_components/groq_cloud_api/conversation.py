@@ -18,7 +18,7 @@ from groq.types.chat import (
 )
 from groq.types.chat.chat_completion_message_tool_call_param import Function
 from groq.types.shared_params import FunctionDefinition
-from voluptuous_openapi import convert
+from probatio import to_openapi
 
 from homeassistant.components import conversation
 from homeassistant.components.conversation import (
@@ -75,7 +75,7 @@ def _format_tool(
     """Format tool specification."""
     tool_spec = FunctionDefinition(
         name=tool.name,
-        parameters=convert(tool.parameters, custom_serializer=custom_serializer),
+        parameters=to_openapi(tool.parameters, custom_serializer=custom_serializer),
     )
     if tool.description:
         tool_spec["description"] = tool.description

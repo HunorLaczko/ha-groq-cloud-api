@@ -6,6 +6,7 @@ Groq Cloud provides multiple models like Llama 3.1, Gemma2, Groq for free! And n
 
 ## Requirements 📖
 
+- Home Assistant `2026.9.0` or newer 🏠
 - An GroqCloud account 👤  --> You can create one [here](https://console.groq.com/login)
 - An `API Key` 🔑 --> You can generate one [here](https://console.groq.com/keys)
 
